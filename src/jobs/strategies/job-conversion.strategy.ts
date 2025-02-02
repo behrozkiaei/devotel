@@ -2,72 +2,97 @@ import { UnifiedJobDto } from "../dto/unified-job.dto";
 
 
 export interface JobConversionStrategy {
-  convert(apiResponse: any): UnifiedJobDto[];
+  convert(apiResponse: any): UnifiedJobDto;
 }
 
-// Strategy for a1 response
-export class A1ConversionStrategy implements JobConversionStrategy {
-  convert(apiResponse: any): UnifiedJobDto[] {
-    return apiResponse.map((job) => ({
-      jobId: job.jobId,
-      title: job.title,
-      remote: job.details.type === 'Remote',
-      experience: 0, // Default for a1
-      location: {
-        city: job.details.location.split(', ')[0],
-        state: job.details.location.split(', ')[1],
-        fullAddress: job.details.location,
-      },
-      contractType: job.details.type,
-      compensation: {
-        min: parseInt(job.details.salaryRange.replace(/[^0-9]/g, '').substring(0, 3)) * 1000,
-        max: parseInt(job.details.salaryRange.replace(/[^0-9]/g, '').substring(3)) * 1000,
-        currency: 'USD',
-        salaryRange: job.details.salaryRange,
-      },
-      company: {
-        name: job.company.name,
-        industry: job.company.industry,
-        website: '', // Default for a1
-      },
-      skills: job.skills,
-      postedDate: job.postedDate,
-    }));
+export class JobMapper {
+  static fromRawJsonToDto(rawData: any): UnifiedJobDto {
+    const dto = new UnifiedJobDto();
+    dto.jobId = rawData.jobId;
+    dto.title = rawData.title;
+    
+    // Process location
+    const [city, state] = rawData.details.location.split(',').map((s: string) => s.trim());
+    dto.city = city;
+    dto.state = state || '';
+    dto.fullAddress = rawData.details.location;
+    
+    // Determine remote status
+    dto.remote = rawData.details.location.toLowerCase().includes('remote');
+    
+    // Process compensation
+    const salaryMatch = rawData.details.salaryRange.match(/\$(\d+)k\s*-\s*\$(\d+)k/);
+    dto.compensation = {
+      min: salaryMatch ? parseInt(salaryMatch[1]) * 1000 : 0,
+      max: salaryMatch ? parseInt(salaryMatch[2]) * 1000 : 0,
+      currency: 'USD',
+      salaryRange: rawData.details.salaryRange
+    };
+    
+    // Process contract type
+    dto.contractType = [rawData.details.type];
+    if (dto.remote) {
+      dto.contractType.push('Remote');
+    }
+    
+    // Process company
+    dto.company = {
+      name: rawData.company.name,
+      website: '' // Add website extraction if available in raw data
+    };
+    
+    // Process other fields
+    dto.industry = rawData.company.industry;
+    dto.skills = rawData.skills;
+    dto.postedDate = rawData.postedDate;
+    
+    // Default values for missing fields
+    dto.experience = 0; // Add experience extraction if available in raw data
+    
+    return dto;
   }
 }
 
-// Strategy for a2 response
-export class A2ConversionStrategy implements JobConversionStrategy {
-  convert(apiResponse: any): UnifiedJobDto[] {
-    const jobKey = Object.keys(apiResponse)[0]; // e.g., "job-8"
-    const jobData = apiResponse[jobKey];
-
-    return [
-      {
-        jobId: jobKey,
-        title: jobData.position,
-        remote: jobData.location.remote,
-        experience: jobData.requirements.experience,
-        location: {
-          city: jobData.location.city,
-          state: jobData.location.state,
-          fullAddress: `${jobData.location.city}, ${jobData.location.state}`,
-        },
-        contractType: jobData.type || 'Full-Time', // Default for a2
-        compensation: {
-          min: jobData.compensation.min,
-          max: jobData.compensation.max,
-          currency: jobData.compensation.currency,
-          salaryRange: `${jobData.compensation.min / 1000}k - ${jobData.compensation.max / 1000}k`,
-        },
-        company: {
-          name: jobData.employer.companyName,
-          industry: '', // Default for a2
-          website: jobData.employer.website,
-        },
-        skills: jobData.requirements.technologies,
-        postedDate: jobData.datePosted,
-      },
-    ];
+export class JobMapperV2 {
+  static fromRawJsonToDto(rawData: any): UnifiedJobDto {
+    const jobKey = Object.keys(rawData)[0]; // Get the dynamic key (e.g., "job-204")
+    const jobData = rawData[jobKey];
+    
+    const dto = new UnifiedJobDto();
+    
+    // Basic fields
+    dto.jobId = jobKey;
+    dto.title = jobData.position;
+    
+    // Location fields
+    dto.city = jobData.location.city;
+    dto.state = jobData.location.state;
+    dto.fullAddress = `${jobData.location.city}, ${jobData.location.state}`;
+    dto.remote = jobData.location.remote || false;
+    
+    // Contract type
+    dto.contractType = dto.remote ? ['Remote'] : [];
+    
+    // Compensation
+    dto.compensation = {
+      min: jobData.compensation.min,
+      max: jobData.compensation.max,
+      currency: jobData.compensation.currency,
+      salaryRange: `$${jobData.compensation.min / 1000}k - $${jobData.compensation.max / 1000}k`
+    };
+    
+    // Company
+    dto.company = {
+      name: jobData.employer.companyName,
+      website: jobData.employer.website
+    };
+    
+    // Other fields
+    dto.industry = ''; // Not provided in source data
+    dto.skills = jobData.requirements.technologies;
+    dto.postedDate = jobData.datePosted;
+    dto.experience = jobData.requirements.experience;
+    
+    return dto;
   }
 }

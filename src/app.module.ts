@@ -1,24 +1,38 @@
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UnifiedJobEntity } from './jobs/entities/unified-job.entity';
-import { CompanyEntity } from './jobs/entities/company.entity';
+import { ConfigModule } from '@nestjs/config';
+
+import { ScheduleModule } from '@nestjs/schedule';
+import { SuperbaseService } from './jobs/providers/superbase.service';
+import { JobService } from './jobs/providers/jobs.service';
+import { CompanyService } from './jobs/providers/company.service';
+import { CityService } from './jobs/providers/city.service';
+import { ContractTypeService } from './jobs/providers/contractType.service';
+import { IndustryService } from './jobs/providers/industry.service';
+import { StateService } from './jobs/providers/state.service';
+import { JobFactory } from './jobs/strategies/job-conversion.factory';
+import { SkillService } from './jobs/providers/skill.service';
+import { JobController } from './jobs/controllers/job/jobs.controller';
+import { ApiController } from './jobs/controllers/api/api.controller';
+import { ApiService } from './jobs/providers/api.service';
+import { JobScheduler } from './jobs/fetching.scheduler';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres', // Database type
-      host: 'localhost', // Database host
-      port: 5432, // Database port
-      username: 'your_db_user', // Database username
-      password: 'your_db_password', // Database password
-      database: 'your_db_name', // Database name
-      entities: [UnifiedJobEntity, CompanyEntity], // Entities to be loaded
-      synchronize: true, // Automatically sync schema (only for development)
-    }),
-    TypeOrmModule.forFeature([UnifiedJobEntity, CompanyEntity]), // Register entities for the module
+  imports: [ConfigModule.forRoot(), ScheduleModule.forRoot(),HttpModule],
+  controllers: [JobController, ApiController],
+  providers: [
+    SuperbaseService,
+    JobService,
+    SkillService,
+    ApiService,
+    CompanyService,
+    CityService,
+    ContractTypeService,
+    IndustryService,
+    StateService,
+    JobFactory,
+    JobScheduler,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}

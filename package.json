@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.0.7",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.7",
@@ -27,6 +28,10 @@
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/swagger": "^11.0.3",
     "@nestjs/typeorm": "^11.0.0",
+    "@supabase/supabase-js": "^2.48.1",
+    "class-transformer": "^0.1.0-beta.10",
+    "class-validator": "^0.14.1",
+    "cron": "^3.5.0",
     "npm-git-install": "^0.3.0",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
