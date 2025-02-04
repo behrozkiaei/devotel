@@ -1,120 +1,104 @@
 // src/job/job.service.ts
-import { Injectable, Logger, Inject } from '@nestjs/common';
-import { SupabaseClient, createClient } from '@supabase/supabase-js';
-import { ConfigService } from '@nestjs/config';
-import { UnifiedJobDto } from '../dto/unified-job.dto';
-import { PaginatedResponseDto } from '../dto/paginated-response.dto';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Like, Between, In } from 'typeorm';
+import { City, Company, ContractType, Job, Skill } from '../entity/jobs.entity';
 import { JobFilterDto } from '../dto/job-filter.dto';
-import { SuperbaseService } from './superbase.service';
+
 
 @Injectable()
 export class ApiService {
   private readonly logger = new Logger(ApiService.name);
 
+  constructor(
+    @InjectRepository(Job)
+    private readonly jobRepository: Repository<Job>,
+    @InjectRepository(City)
+    private readonly cityRepository: Repository<City>,
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
+    @InjectRepository(ContractType)
+    private readonly contractTypeRepository: Repository<ContractType>,
+    @InjectRepository(Skill)
+    private readonly skillRepository: Repository<Skill>,
+  ) {}
 
-  constructor(private configService: ConfigService,  private superabase: SuperbaseService) {
-  }
-  
-  async getJobs(filters: JobFilterDto): Promise<PaginatedResponseDto<UnifiedJobDto>> {
-    const supabase = this.superabase.getClient();
-    const { page = 1, limit = 10, ...queryFilters } = filters;
-    const offset = (page - 1) * limit;
-   
+  async getJobs(filter: JobFilterDto): Promise<{ data: Job[]; total: number }> {
     try {
-      let query = supabase
-        .from('Job')
-        .select(`
-          jobId,
-          title,
-          remote,
-          experience,
-          city,
-          state,
-          fullAddress:full_address,
-          compensation_min,
-          compensation_max,
-          compensation_currency,
-          compensation_salary_range,
-          company:company_id (name, website),
-          industry:industry_id (name),
-          skills:JobSkill (skill:skill_id (name)),
-          contractTypes:JobContractType (contractType:contract_type_id (type)),
-          postedDate:posted_date
-        `)
-        .range(offset, offset + limit - 1);
+      this.logger.debug(`Fetching jobs with filters: ${JSON.stringify(filter)}`);
+      
+      const {
+        title,
+        location,
+        salaryMin,
+        salaryMax,
+        company,
+        skills,
+        contractTypes,
+        page = 1,
+        limit = 10,
+      } = filter;
 
-      // Apply filters
-      if (queryFilters.title) {
-        query = query.ilike('title', `%${queryFilters.title}%`);
+      const query = this.jobRepository
+        .createQueryBuilder('job')
+        .leftJoinAndSelect('job.city', 'city')
+        .leftJoinAndSelect('job.company', 'company')
+        .leftJoinAndSelect('job.jobContractTypes', 'jobContractType')
+        .leftJoinAndSelect('jobContractType.contractType', 'contractType')
+        .leftJoinAndSelect('job.jobSkills', 'jobSkill')
+        .leftJoinAndSelect('jobSkill.skill', 'skill')
+        .take(limit)
+        .skip((page - 1) * limit);
+
+      if (title) {
+        query.andWhere('job.title LIKE :title', { title: `%${title}%` });
       }
 
-      if (queryFilters.location) {
-        const [city, state] = queryFilters.location.split(',').map(s => s.trim());
-        query = query.or(`city.ilike.%${city}%,state.ilike.%${state || city}%`);
+      if (location) {
+        query.andWhere('city.name LIKE :location', { location: `%${location}%` });
       }
 
-      if (queryFilters.salaryMin || queryFilters.salaryMax) {
-        const min = queryFilters.salaryMin || 0;
-        const max = queryFilters.salaryMax || Number.MAX_SAFE_INTEGER;
-        query = query.gte('compensation_min', min).lte('compensation_max', max);
-      }
-      if (queryFilters.company) {
-        query = query.ilike('company.name', `%${queryFilters.company}%`);
-      }
-  
-      if (queryFilters.skills?.length) {
-        query = query.contains('skills.skill.name', queryFilters.skills);
-      }
-  
-      if (queryFilters.contractTypes?.length) {
-        query = query.contains('contractTypes.contractType.type', queryFilters.contractTypes);
-      }
-      const { data, error, count } = await query;
-
-      if (error) {
-        this.logger.error(`Supabase error: ${error.message}`);
-        throw new Error('Failed to fetch jobs from database');
+      if (salaryMin !== undefined && salaryMax !== undefined) {
+        query.andWhere('job.compensation_min BETWEEN :salaryMin AND :salaryMax', {
+          salaryMin,
+          salaryMax,
+        });
+      } else if (salaryMin !== undefined) {
+        query.andWhere('job.compensation_min >= :salaryMin', { salaryMin });
+      } else if (salaryMax !== undefined) {
+        query.andWhere('job.compensation_max <= :salaryMax', { salaryMax });
       }
 
-      const jobs = data.map(job => this.mapToUnifiedJobDto(job));
+      if (company) {
+        query.andWhere('company.name LIKE :company', { company: `%${company}%` });
+      }
 
-      return new PaginatedResponseDto({
-        data: jobs,
-        total: count ?? 0,
-        page,
-        limit,
-        totalPages: Math.ceil(count! / limit)
-      });
+      if (skills) {
+        const skillsArray = Array.isArray(skills) ? skills : [skills];
+        if (skillsArray.length > 0) {
+          query.andWhere('skill.name IN (:...skills)', { skills: skillsArray });
+        }
+      }
 
+      if (contractTypes) {
+        const contractTypesArray = Array.isArray(contractTypes) ? contractTypes : [contractTypes];
+        if (contractTypesArray.length > 0) {
+          query.andWhere('contractType.type IN (:...contractTypes)', {
+            contractTypes: contractTypesArray,
+          });
+        }
+      }
+
+      const [data, total] = await query.getManyAndCount();
+      
+      this.logger.debug(`Found ${total} jobs matching the criteria`);
+      return { data, total };
     } catch (error) {
-      this.logger.error(`Failed to fetch jobs: ${error.message}`);
-      throw error;
+      this.logger.error(
+        `Failed to fetch jobs: ${error.message}`,
+        error.stack
+      );
+      throw new Error(`Failed to fetch jobs: ${error.message}`);
     }
-  }
-
-  private mapToUnifiedJobDto(job: any): UnifiedJobDto {
-    return {
-      jobId: job.jobId,
-      title: job.title,
-      remote: job.remote,
-      experience: job.experience,
-      city: job.city,
-      state: job.state,
-      fullAddress: job.fullAddress,
-      contractType: job.contractTypes.map(ct => ct.contractType.type),
-      compensation: {
-        min: job.compensation_min,
-        max: job.compensation_max,
-        currency: job.compensation_currency,
-        salaryRange: job.compensation_salary_range
-      },
-      company: {
-        name: job.company.name,
-        website: job.company.website
-      },
-      industry: job.industry.name,
-      skills: job.skills.map(s => s.skill.name),
-      postedDate: job.postedDate
-    };
   }
 }

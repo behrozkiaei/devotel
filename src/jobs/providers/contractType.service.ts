@@ -1,20 +1,21 @@
-import { Injectable } from "@nestjs/common";
-import { GenericRepository } from "./IRepository";
-import { ContractType } from "../dto/unified-job.dto";
-import { SuperbaseService } from "./superbase.service";
+// contract-type.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ContractType } from '../entity/jobs.entity';
 
 @Injectable()
 export class ContractTypeService {
-  private readonly contractTypeRepository: GenericRepository<ContractType>;
-
-  constructor(supabaseService: SuperbaseService) {
-    this.contractTypeRepository = new GenericRepository<ContractType>('ContractType', supabaseService);
-  }
+  constructor(
+    @InjectRepository(ContractType)
+    private readonly contractTypeRepository: Repository<ContractType>
+  ) {}
 
   async findOrCreate(type: string): Promise<ContractType> {
-    let dbContractType = await this.contractTypeRepository.findOne({ type });
+    let dbContractType = await this.contractTypeRepository.findOne({ where: { type } });
     if (!dbContractType) {
-      dbContractType = await this.contractTypeRepository.insert({ type });
+      dbContractType = this.contractTypeRepository.create({ type });
+      await this.contractTypeRepository.save(dbContractType);
     }
     return dbContractType;
   }

@@ -1,7 +1,7 @@
 // src/job/dto/job-filter.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsNumber, Min, IsString, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class JobFilterDto {
   @ApiProperty({
@@ -47,26 +47,24 @@ export class JobFilterDto {
   company?: string;
 
   @ApiProperty({
+    type: [String], // Explicitly specify that this is an array of strings
+    example: ['html'],
+    description: 'Array of skills for the job',
     required: false,
-    type: [String],
-    description: 'Filter by skills (exact match)'
   })
-  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsString({ each: true })
-  @Type(() => String)
-  skills?: string[];
+  skills: string[];
 
   @ApiProperty({
+    type: [String], // Explicitly specify that this is an array of strings
+    example: ['Contract'],
+    description: 'Array of contract types for the job',
     required: false,
-    type: [String],
-    description: 'Filter by contract types (exact match)'
   })
-  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsString({ each: true })
-  @Type(() => String)
-  contractTypes?: string[];
+  contractTypes: string[];
 
   @ApiProperty({
     required: false,

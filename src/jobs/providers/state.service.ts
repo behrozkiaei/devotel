@@ -1,25 +1,22 @@
+// state.service.ts
 import { Injectable } from '@nestjs/common';
-import { GenericRepository } from './IRepository';
-import { SuperbaseService } from './superbase.service';
-import { State } from '../dto/unified-job.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { State } from '../entity/jobs.entity';
 
 @Injectable()
 export class StateService {
-  private readonly stateRepository: GenericRepository<State>;
-
-  constructor(superbase: SuperbaseService) {
-    this.stateRepository = new GenericRepository<State>('State',superbase);
-  }
+  constructor(
+    @InjectRepository(State)
+    private readonly stateRepository: Repository<State>
+  ) {}
 
   async findOrCreate(state: string): Promise<State> {
-    let dbState = await this.stateRepository.findOne({ name: state });
+    let dbState = await this.stateRepository.findOne({ where: { name: state } });
     if (!dbState) {
-      dbState = await this.stateRepository.insert({
-          name: state
-      });
+      dbState = this.stateRepository.create({ name: state });
+      await this.stateRepository.save(dbState);
     }
     return dbState;
   }
 }
-
-

@@ -1,32 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { GenericRepository } from './IRepository';
-import { Company } from '../dto/unified-job.dto';
-import { SuperbaseService } from './superbase.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Company } from '../entity/jobs.entity';
 
 @Injectable()
 export class CompanyService {
-  private readonly companyRepository: GenericRepository<Company>;
+  constructor(
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>
+  ) {}
 
-  constructor(supabaseService: SuperbaseService) {
-    this.companyRepository = new GenericRepository<Company>(
-      'Company',
-      supabaseService,
-    );
-  }
-
-  async findOrCreate(company: {
-    name: string;
-    website: string;
-  }): Promise<Company> {
-    let dbCompany = await this.companyRepository.findOne({
-      name: company.name,
-    });
+  async findOrCreate(company: { name: string; website: string; }): Promise<Company> {
+    let dbCompany = await this.companyRepository.findOne({ where: { name: company.name } });
     if (!dbCompany) {
-      dbCompany = await this.companyRepository.insert({
+      dbCompany = this.companyRepository.create({
         name: company.name,
         website: company.website,
       });
+      await this.companyRepository.save(dbCompany);
     }
     return dbCompany;
   }
 }
+

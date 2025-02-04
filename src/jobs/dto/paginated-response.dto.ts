@@ -1,6 +1,17 @@
 // src/job/dto/paginated-response.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 
+export class PaginationMetadataDto {
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  offset: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  data: any
+}
+
 export class PaginatedResponseDto<T> {
   @ApiProperty({ description: 'Array of results' })
   data: T[];
@@ -16,7 +27,6 @@ export class PaginatedResponseDto<T> {
 
   @ApiProperty({ example: 10, description: 'Total number of pages' })
   totalPages: number;
-
   constructor(partial: Partial<PaginatedResponseDto<T>>) {
     Object.assign(this, partial);
   }

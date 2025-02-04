@@ -1,20 +1,21 @@
+// industry.service.ts
 import { Injectable } from '@nestjs/common';
-import { GenericRepository } from './IRepository';
-import { Industry } from '../dto/unified-job.dto';
-import { SuperbaseService } from './superbase.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Industry } from '../entity/jobs.entity';
 
 @Injectable()
 export class IndustryService {
-  private readonly industryRepository: GenericRepository<Industry>;
-
-  constructor(supabaseService: SuperbaseService) {
-    this.industryRepository = new GenericRepository<Industry>('Industry', supabaseService);
-  }
+  constructor(
+    @InjectRepository(Industry)
+    private readonly industryRepository: Repository<Industry>
+  ) {}
 
   async findOrCreate(industry: string): Promise<Industry> {
-    let dbIndustry = await this.industryRepository.findOne({ name: industry });
+    let dbIndustry = await this.industryRepository.findOne({ where: { name: industry } });
     if (!dbIndustry) {
-      dbIndustry = await this.industryRepository.insert({ name: industry });
+      dbIndustry = this.industryRepository.create({ name: industry });
+      await this.industryRepository.save(dbIndustry);
     }
     return dbIndustry;
   }

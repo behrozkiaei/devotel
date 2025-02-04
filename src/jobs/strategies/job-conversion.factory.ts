@@ -2,20 +2,22 @@ import { UnifiedJobDto } from "../dto/unified-job.dto";
 import { JobMapper, JobMapperV2 } from "./job-conversion.strategy";
 
 export class JobFactory {
-  static createFromAnyResponse(rawData: any): UnifiedJobDto[] {
-    if ('jobsList' in rawData.data) {
+  static createFromAnyResponse(rawData: any , url :string): UnifiedJobDto[] {
+    console.log(3)
+    if (url.includes("provider1")) {
       console.log("here arrives " )
       return this.handleFirstResponseFormat(rawData);
-    } else if ('jobs' in rawData) {
+    } else if (url.includes("provider2")) {
+      console.log("provire2")
       return this.handleSecondResponseFormat(rawData);
     }
     throw new Error('Unsupported response format');
   }
 
-  private static handleFirstResponseFormat(response: any): UnifiedJobDto[] {
+  private static handleSecondResponseFormat (response: any): UnifiedJobDto[] {
     console.log(1)
     const jobs = response.data.jobsList;
-    console.log(2)
+    console.log(jobs ,"jobs")
     return Object.keys(jobs).map(jobKey => {
       console.log(jobKey)
       const jobData = { [jobKey]: jobs[jobKey] };
@@ -23,33 +25,9 @@ export class JobFactory {
     });
   }
 
-  private static handleSecondResponseFormat(response: any): UnifiedJobDto[] {
+  private static handleFirstResponseFormat(response: any): UnifiedJobDto[] {
     return response.jobs.map((job: any) => {
-      // Convert second format to first format structure
-      const transformedJob = {
-        jobId: job.jobId,
-        position: job.title,
-        location: {
-          city: job.details.location.split(',')[0].trim(),
-          state: job.details.location.split(',')[1]?.trim() || '',
-          remote: job.details.location.toLowerCase().includes('remote')
-        },
-        compensation: {
-          min: parseInt(job.details.salaryRange.match(/\$(\d+)k/)[1]) * 1000,
-          max: parseInt(job.details.salaryRange.match(/- \$(\d+)k/)[1]) * 1000,
-          currency: 'USD'
-        },
-        employer: {
-          companyName: job.company.name,
-          website: job.company.website || ''
-        },
-        requirements: {
-          experience: 0, // Default value
-          technologies: job.skills
-        },
-        datePosted: job.postedDate
-      };
-      return JobMapper.fromRawJsonToDto(transformedJob);
+      return JobMapper.fromRawJsonToDto(job);
     });
   }
 }

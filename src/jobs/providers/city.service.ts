@@ -1,28 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { City, State } from '../entity/jobs.entity';
 
-import { City } from '../dto/unified-job.dto';
-import { GenericRepository } from './IRepository';
-import { SuperbaseService } from './superbase.service';
 
 @Injectable()
 export class CityService {
-  private readonly cityRepository: GenericRepository<City>;
+  constructor(
+    @InjectRepository(City)
+    private readonly cityRepository: Repository<City>,
+    @InjectRepository(State)
+    private readonly stateRepository: Repository<State>,
+  ) {}
 
-  constructor(supabaseService: SuperbaseService) {
-    this.cityRepository = new GenericRepository<City>('City', supabaseService);
-  }
-
-  async findOrCreate(city: string, stateId: number): Promise<City> {
+  async findOrCreate(cityName: string, state: State): Promise<City> {
     let dbCity = await this.cityRepository.findOne({
-      name: city,
-      state_id: stateId,
+      where: { name: cityName}
     });
+
     if (!dbCity) {
-      dbCity = await this.cityRepository.insert({
-        name: city,
-        state_id: stateId,
+      const newCity = this.cityRepository.create({
+        name: cityName,state
       });
+      dbCity = await this.cityRepository.save(newCity);
     }
+
     return dbCity;
   }
 }
