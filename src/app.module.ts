@@ -19,6 +19,7 @@ import { JobFactory } from './jobs/strategies/job-conversion.factory';
 import { JobController } from './jobs/controllers/job/jobs.controller';
 import { ApiController } from './jobs/controllers/api/api.controller';
 import { ApiService } from './jobs/providers/api.service';
+import { CustomLoggerService } from './common/services/logger.service';
 
 @Module({
   imports: [
@@ -65,7 +66,10 @@ import { ApiService } from './jobs/providers/api.service';
     SkillService,
     ContractTypeService,
     JobFactory,
-    JobService,ApiService
+    JobService,ApiService,
+    CustomLoggerService , 
+    JobSkill,
+    JobContractType
   ],
 })
 export class AppModule {}

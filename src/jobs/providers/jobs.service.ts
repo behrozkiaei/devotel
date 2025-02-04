@@ -11,6 +11,8 @@ import { SkillService } from './skill.service';
 import { ContractTypeService } from './contractType.service';
 import { Job, JobContractType, JobSkill } from '../entity/jobs.entity';
 import { UnifiedJobDto } from '../dto/unified-job.dto';
+import { JobSkillService } from './job-skill.service';
+import { JobContractTypeService } from './job-contract-type.service';
 
 @Injectable()
 export class JobService {
@@ -27,6 +29,8 @@ export class JobService {
     private readonly industryService: IndustryService,
     private readonly skillService: SkillService,
     private readonly contractTypeService: ContractTypeService,
+    private readonly jobSkillService: JobSkillService,
+    private readonly jobContractTypeService: JobContractTypeService,
     private readonly logger: CustomLoggerService,
   ) {}
 
@@ -67,19 +71,9 @@ export class JobService {
         await this.jobRepository.save(job);
         this.logger.debug(`Successfully saved job with ID: ${jobId}`);
 
-        // Handle contract types
-        for await (let type of contractType) {
-          const dbContractType = await this.contractTypeService.findOrCreate(type);
-          await this.jobContractTypeRepository.save({ job: job, contractType: dbContractType });
-        }
-        this.logger.debug(`Added ${contractType.length} contract types for job ${jobId}`);
-
-        // Handle skills
-        for await (let skill of skills) {
-          const dbSkill = await this.skillService.findOrCreate(skill);
-          await this.jobSkillRepository.save({ job: job, skillId: dbSkill.id });
-        }
-        this.logger.debug(`Added ${skills.length} skills for job ${jobId}`);
+        // Add contract types and skills using the new services
+        await this.jobContractTypeService.addContractTypesToJob(job, contractType);
+        await this.jobSkillService.addSkillsToJob(job, skills);
 
       } catch (error) {
         this.logger.error(`Error while saving related entities for job ${jobId}: ${error.message}`, error.stack);

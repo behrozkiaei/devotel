@@ -1,14 +1,14 @@
 // src/job/job.service.ts
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Between, In } from 'typeorm';
 import { City, Company, ContractType, Job, Skill } from '../entity/jobs.entity';
 import { JobFilterDto } from '../dto/job-filter.dto';
-
+import { CustomLoggerService } from '../../common/services/logger.service';
 
 @Injectable()
 export class ApiService {
-  private readonly logger = new Logger(ApiService.name);
+  private readonly logger: CustomLoggerService;
 
   constructor(
     @InjectRepository(Job)
@@ -21,7 +21,9 @@ export class ApiService {
     private readonly contractTypeRepository: Repository<ContractType>,
     @InjectRepository(Skill)
     private readonly skillRepository: Repository<Skill>,
-  ) {}
+  ) {
+    this.logger = new CustomLoggerService(ApiService.name);
+  }
 
   async getJobs(filter: JobFilterDto): Promise<{ data: Job[]; total: number }> {
     try {
