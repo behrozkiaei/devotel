@@ -7,47 +7,46 @@ export interface JobConversionStrategy {
 
 export class JobMapper {
   static fromRawJsonToDto(rawJob: any): UnifiedJobDto {
+    // Parse location for provider1
+    const [city, state] = (rawJob.details?.location || '').split(', ');
+
     return {
-      jobId: rawJob.id,
+      jobId: rawJob.jobId,
       title: rawJob.title,
-      city: rawJob.location?.city || '',
-      state: rawJob.location?.state || '',
-      fullAddress: this.buildFullAddress(rawJob.location?.city, rawJob.location?.state),
-      remote: this.isRemote(rawJob.location?.city),
+      city: city || '',
+      state: state || '',
+      fullAddress: rawJob.details?.location || '',
+      remote: this.isRemote(city),
       compensation: {
-        min: rawJob.salary?.min || 0,
-        max: rawJob.salary?.max || 0,
-        currency: rawJob.salary?.currency || 'USD',
-        salaryRange: this.formatSalaryRange(rawJob.salary?.min, rawJob.salary?.max),
+        min: this.parseSalaryRange(rawJob.details?.salaryRange).min,
+        max: this.parseSalaryRange(rawJob.details?.salaryRange).max,
+        currency: 'USD',
+        salaryRange: rawJob.details?.salaryRange || '',
       },
-      contractType: rawJob.type || [],
+      contractType: rawJob.details?.type ? [rawJob.details.type] : [],
       company: {
         name: rawJob.company?.name || '',
         website: rawJob.company?.website || '',
       },
-      industry: '',
+      industry: rawJob.company?.industry || '',
       skills: rawJob.skills || [],
-      postedDate: rawJob.posted_date || new Date().toISOString(),
+      postedDate: rawJob.postedDate || new Date().toISOString(),
       experience: 0,
     };
   }
 
-  private static buildFullAddress(city?: string, state?: string): string {
-    if (!city && !state) return '';
-    if (!state) return city || '';
-    if (!city) return state;
-    return `${city}, ${state}`;
+  private static parseSalaryRange(range: string): { min: number; max: number } {
+    if (!range) return { min: 0, max: 0 };
+    const matches = range.match(/\$(\d+)k\s*-\s*\$(\d+)k/);
+    if (!matches) return { min: 0, max: 0 };
+    return {
+      min: parseInt(matches[1]) * 1000,
+      max: parseInt(matches[2]) * 1000
+    };
   }
 
   private static isRemote(city?: string): boolean {
     return city?.toLowerCase() === 'remote';
-  }
-
-  private static formatSalaryRange(min?: number, max?: number): string {
-    if (!min && !max) return '';
-    const minStr = min ? `$${Math.floor(min/1000)}k` : '';
-    const maxStr = max ? `$${Math.floor(max/1000)}k` : '';
-    return `${minStr}${min && max ? ' - ' : ''}${maxStr}`;
   }
 }
 
@@ -59,25 +58,25 @@ export class JobMapperV2 {
     return {
       jobId,
       title: job.position,
-      city: job.city || '',
-      state: job.state || '',
-      fullAddress: this.buildFullAddress(job.city, job.state),
-      remote: this.isRemote(job.city),
+      city: job.location?.city || '',
+      state: job.location?.state || '',
+      fullAddress: this.buildFullAddress(job.location?.city, job.location?.state),
+      remote: job.location?.remote || false,
       compensation: {
-        min: job.compensation?.minimum || 0,
-        max: job.compensation?.maximum || 0,
+        min: job.compensation?.min || 0,
+        max: job.compensation?.max || 0,
         currency: job.compensation?.currency || 'USD',
-        salaryRange: this.formatSalaryRange(job.compensation?.minimum, job.compensation?.maximum),
+        salaryRange: this.formatSalaryRange(job.compensation?.min, job.compensation?.max),
       },
-      contractType: job.contractType || [],
+      contractType: [],
       company: {
         name: job.employer?.companyName || '',
-        website: job.employer?.url || '',
+        website: job.employer?.website || '',
       },
       industry: '',
-      skills: job.requiredSkills || [],
+      skills: job.requirements?.technologies || [],
       postedDate: job.datePosted || new Date().toISOString(),
-      experience: 0,
+      experience: job.requirements?.experience || 0,
     };
   }
 

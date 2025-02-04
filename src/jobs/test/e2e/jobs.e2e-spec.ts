@@ -2,11 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as request from 'supertest';
-import { createTestingModule } from './test.helper';
-import { UnifiedJobDto } from '../dto/unified-job.dto';
-import { JobFilterDto } from '../dto/job-filter.dto';
-import { Job, JobSkill, JobContractType, Skill, ContractType, Company, City, State, Industry } from '../entity/jobs.entity';
-
+import { Job, JobSkill, JobContractType, Skill, ContractType, Company, City, State, Industry } from '../../entity/jobs.entity';
+import { UnifiedJobDto } from '../../dto/unified-job.dto';
+import { JobFilterDto } from '../../dto/job-filter.dto';
+import { createTestingModule } from '../test.helper';
 
 describe('Jobs Module (e2e)', () => {
   let app: INestApplication;
