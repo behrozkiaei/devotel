@@ -24,6 +24,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { JobSkillService } from './jobs/providers/job-skill.service';
 import { JobContractTypeService } from './jobs/providers/job-contract-type.service';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -59,7 +60,7 @@ import { JobContractTypeService } from './jobs/providers/job-contract-type.servi
     ScheduleModule.forRoot(),
     HttpModule,
   ],
-  controllers: [JobController , ApiController],
+  controllers: [JobController, ApiController, AppController],
   providers: [
     JobScheduler,
     JobService,
@@ -70,8 +71,9 @@ import { JobContractTypeService } from './jobs/providers/job-contract-type.servi
     SkillService,
     ContractTypeService,
     JobFactory,
-    JobService,ApiService,
-    CustomLoggerService , 
+    JobService,
+    ApiService,
+    CustomLoggerService,
     JobSkill,
     JobContractType,
     JobSkillService,
