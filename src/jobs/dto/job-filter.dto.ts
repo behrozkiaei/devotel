@@ -47,24 +47,22 @@ export class JobFilterDto {
   company?: string;
 
   @ApiProperty({
-    type: [String], // Explicitly specify that this is an array of strings
-    example: ['html'],
-    description: 'Array of skills for the job',
+    type: [String],
     required: false,
+    default: [],
   })
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsOptional()
   @IsArray()
-  skills: string[];
+  skills?: string[] = [];
 
   @ApiProperty({
-    type: [String], // Explicitly specify that this is an array of strings
-    example: ['Contract'],
-    description: 'Array of contract types for the job',
+    type: [String],
     required: false,
+    default: [],
   })
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsOptional()
   @IsArray()
-  contractTypes: string[];
+  contractTypes?: string[] = [];
 
   @ApiProperty({
     required: false,

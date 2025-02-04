@@ -6,93 +6,96 @@ export interface JobConversionStrategy {
 }
 
 export class JobMapper {
-  static fromRawJsonToDto(rawData: any): UnifiedJobDto {
-    const dto = new UnifiedJobDto();
-    dto.jobId = rawData.jobId;
-    dto.title = rawData.title;
-    
-    // Process location
-    const [city, state] = rawData.details.location.split(',').map((s: string) => s.trim());
-    dto.city = city;
-    dto.state = state || '';
-    dto.fullAddress = rawData.details.location;
-    
-    // Determine remote status
-    dto.remote = rawData.details.location.toLowerCase().includes('remote');
-    
-    // Process compensation
-    const salaryMatch = rawData.details.salaryRange.match(/\$(\d+)k\s*-\s*\$(\d+)k/);
-    dto.compensation = {
-      min: salaryMatch ? parseInt(salaryMatch[1]) * 1000 : 0,
-      max: salaryMatch ? parseInt(salaryMatch[2]) * 1000 : 0,
-      currency: 'USD',
-      salaryRange: rawData.details.salaryRange
+  static fromRawJsonToDto(rawJob: any): UnifiedJobDto {
+    return {
+      jobId: rawJob.id,
+      title: rawJob.title,
+      city: rawJob.location?.city || '',
+      state: rawJob.location?.state || '',
+      fullAddress: this.buildFullAddress(rawJob.location?.city, rawJob.location?.state),
+      remote: this.isRemote(rawJob.location?.city),
+      compensation: {
+        min: rawJob.salary?.min || 0,
+        max: rawJob.salary?.max || 0,
+        currency: rawJob.salary?.currency || 'USD',
+        salaryRange: this.formatSalaryRange(rawJob.salary?.min, rawJob.salary?.max),
+      },
+      contractType: rawJob.type || [],
+      company: {
+        name: rawJob.company?.name || '',
+        website: rawJob.company?.website || '',
+      },
+      industry: '',
+      skills: rawJob.skills || [],
+      postedDate: rawJob.posted_date || new Date().toISOString(),
+      experience: 0,
     };
-    
-    // Process contract type
-    dto.contractType = [rawData.details.type];
-    if (dto.remote) {
-      dto.contractType.push('Remote');
-    }
-    
-    // Process company
-    dto.company = {
-      name: rawData.company.name,
-      website: '' // Add website extraction if available in raw data
-    };
-    
-    // Process other fields
-    dto.industry = rawData.company.industry;
-    dto.skills = rawData.skills;
-    dto.postedDate = rawData.postedDate;
-    
-    // Default values for missing fields
-    dto.experience = 0; // Add experience extraction if available in raw data
-    
-    return dto;
+  }
+
+  private static buildFullAddress(city?: string, state?: string): string {
+    if (!city && !state) return '';
+    if (!state) return city || '';
+    if (!city) return state;
+    return `${city}, ${state}`;
+  }
+
+  private static isRemote(city?: string): boolean {
+    return city?.toLowerCase() === 'remote';
+  }
+
+  private static formatSalaryRange(min?: number, max?: number): string {
+    if (!min && !max) return '';
+    const minStr = min ? `$${Math.floor(min/1000)}k` : '';
+    const maxStr = max ? `$${Math.floor(max/1000)}k` : '';
+    return `${minStr}${min && max ? ' - ' : ''}${maxStr}`;
   }
 }
 
 export class JobMapperV2 {
-  static fromRawJsonToDto(rawData: any): UnifiedJobDto {
-    const jobKey = Object.keys(rawData)[0]; // Get the dynamic key (e.g., "job-204")
-    const jobData = rawData[jobKey];
-    
-    const dto = new UnifiedJobDto();
-    
-    // Basic fields
-    dto.jobId = jobKey;
-    dto.title = jobData.position;
-    
-    // Location fields
-    dto.city = jobData.location.city;
-    dto.state = jobData.location.state;
-    dto.fullAddress = `${jobData.location.city}, ${jobData.location.state}`;
-    dto.remote = jobData.location.remote || false;
-    
-    // Contract type
-    dto.contractType = dto.remote ? ['Remote'] : [];
-    
-    // Compensation
-    dto.compensation = {
-      min: jobData.compensation.min,
-      max: jobData.compensation.max,
-      currency: jobData.compensation.currency,
-      salaryRange: `$${jobData.compensation.min / 1000}k - $${jobData.compensation.max / 1000}k`
+  static fromRawJsonToDto(rawJob: any): UnifiedJobDto {
+    const jobId = Object.keys(rawJob)[0];
+    const job = rawJob[jobId];
+
+    return {
+      jobId,
+      title: job.position,
+      city: job.city || '',
+      state: job.state || '',
+      fullAddress: this.buildFullAddress(job.city, job.state),
+      remote: this.isRemote(job.city),
+      compensation: {
+        min: job.compensation?.minimum || 0,
+        max: job.compensation?.maximum || 0,
+        currency: job.compensation?.currency || 'USD',
+        salaryRange: this.formatSalaryRange(job.compensation?.minimum, job.compensation?.maximum),
+      },
+      contractType: job.contractType || [],
+      company: {
+        name: job.employer?.companyName || '',
+        website: job.employer?.url || '',
+      },
+      industry: '',
+      skills: job.requiredSkills || [],
+      postedDate: job.datePosted || new Date().toISOString(),
+      experience: 0,
     };
-    
-    // Company
-    dto.company = {
-      name: jobData.employer.companyName,
-      website: jobData.employer.website
-    };
-    
-    // Other fields
-    dto.industry = ''; // Not provided in source data
-    dto.skills = jobData.requirements.technologies;
-    dto.postedDate = jobData.datePosted;
-    dto.experience = jobData.requirements.experience;
-    
-    return dto;
+  }
+
+  private static buildFullAddress(city?: string, state?: string): string {
+    if (!city && !state) return '';
+    if (!state) return city || '';
+    if (!city) return state;
+    return `${city}, ${state}`;
+  }
+
+  private static isRemote(city?: string): boolean {
+    return city?.toLowerCase() === 'remote';
+  }
+
+  private static formatSalaryRange(min?: number, max?: number): string {
+    if (!min && !max) return '';
+    const minStr = min ? `$${Math.floor(min/1000)}k` : '';
+    const maxStr = max ? `$${Math.floor(max/1000)}k` : '';
+    return `${minStr}${min && max ? ' - ' : ''}${maxStr}`;
   }
 }

@@ -20,6 +20,10 @@ import { JobController } from './jobs/controllers/job/jobs.controller';
 import { ApiController } from './jobs/controllers/api/api.controller';
 import { ApiService } from './jobs/providers/api.service';
 import { CustomLoggerService } from './common/services/logger.service';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { JobSkillService } from './jobs/providers/job-skill.service';
+import { JobContractTypeService } from './jobs/providers/job-contract-type.service';
 
 @Module({
   imports: [
@@ -69,7 +73,13 @@ import { CustomLoggerService } from './common/services/logger.service';
     JobService,ApiService,
     CustomLoggerService , 
     JobSkill,
-    JobContractType
+    JobContractType,
+    JobSkillService,
+    JobContractTypeService,
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
   ],
 })
 export class AppModule {}

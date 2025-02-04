@@ -1,16 +1,23 @@
 // src/job/job.controller.ts
-import { Controller, Get, Query, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { JobFilterDto } from 'src/jobs/dto/job-filter.dto';
-import { PaginatedResponseDto } from 'src/jobs/dto/paginated-response.dto';
+import { Controller, Get, Query, UseFilters } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { JobFilterDto } from '../../dto/job-filter.dto';
+import { PaginatedResponseDto } from '../../dto/paginated-response.dto';
 import { UnifiedJobDto } from 'src/jobs/dto/unified-job.dto';
 import { Job } from 'src/jobs/entity/jobs.entity';
-import { ApiService } from 'src/jobs/providers/api.service';
+import { ApiService } from '../../providers/api.service';
+import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter';
+import { CustomLoggerService } from '../../../common/services/logger.service';
 
 @ApiTags('Job Offers')
 @Controller('api/job-offers')
+@UseFilters(HttpExceptionFilter)
 export class ApiController {
-  constructor(private readonly apiService:ApiService ) {}
+  private readonly logger: CustomLoggerService;
+
+  constructor(private readonly apiService: ApiService) {
+    this.logger = new CustomLoggerService(ApiController.name);
+  }
 
   @Get()
   @ApiOperation({ 
@@ -24,17 +31,8 @@ export class ApiController {
   })
   @ApiResponse({ status: 400, description: 'Invalid query parameters' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getJobOffers(@Query() filters: JobFilterDto): Promise<{ data: Job[]; total: number }> {
-    try {
-      return await this.apiService.getJobs(filters);
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message || 'Internal server error',
-        },
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
+  async getJobOffers(@Query() filters: JobFilterDto) {
+    this.logger.debug(`Receiving request for job offers with filters: ${JSON.stringify(filters)}`);
+    return await this.apiService.getJobs(filters);
   }
 }
