@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, QueryFailedError } from 'typeorm';
-import { ApiService } from '../providers/api.service';
-import { Job, City, Company, ContractType, Skill } from '../entity/jobs.entity';
-import { JobFilterDto } from '../dto/job-filter.dto';
-import { AppError } from '../../common/errors/app.error';
+
+
 import { Logger } from '@nestjs/common';
+import { City, Company, ContractType, Job, Skill } from '../../entity/jobs.entity';
+import { JobFilterDto } from 'src/jobs/dto/job-filter.dto';
+import { AppError } from '../../../common/errors/app.error';
+import { ApiService } from '../../providers/api.service';
 
 describe('ApiService', () => {
   let service: ApiService;

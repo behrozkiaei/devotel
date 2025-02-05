@@ -1,7 +1,7 @@
 // job.controller.ts
 import { Controller, Post, Body, NotFoundException } from '@nestjs/common';
-import { UnifiedJobDto } from 'src/jobs/dto/unified-job.dto';
-import { JobService } from 'src/jobs/providers/jobs.service';
+import { UnifiedJobDto } from '../../../jobs/dto/unified-job.dto';
+import { JobService } from '../../providers/jobs.service';
 
 
 @Controller('jobs')

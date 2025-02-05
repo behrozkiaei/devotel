@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { JobFactory } from '../strategies/job-conversion.factory';
-import { UnifiedJobDto } from '../dto/unified-job.dto';
+import { JobFactory } from '../../strategies/job-conversion.factory';
+import { UnifiedJobDto } from '../../dto/unified-job.dto';
 
 describe('JobFactory', () => {
   const provider1Response = {

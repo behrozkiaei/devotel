@@ -1,6 +1,6 @@
-import { JobFactory } from './job-conversion.factory';
-import { JobMapper, JobMapperV2 } from './job-conversion.strategy';
-import { UnifiedJobDto } from '../dto/unified-job.dto';
+import { JobFactory } from '../../strategies/job-conversion.factory';
+import { JobMapper, JobMapperV2 } from '../../strategies/job-conversion.strategy';
+import { UnifiedJobDto } from '../../dto/unified-job.dto';
 
 describe('JobFactory', () => {
   let mockUnifiedJob: UnifiedJobDto;

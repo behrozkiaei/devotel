@@ -1,5 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { Job, State, City, Company, ContractType, Industry, Skill, JobContractType, JobSkill } from '../entity/jobs.entity';
+import { Job, State, City, Company, ContractType, Industry, Skill, JobContractType,JobSkill  } from '../../entity/jobs.entity';
+
 
 export const testDbConfig: TypeOrmModuleOptions = {
   type: 'sqlite',

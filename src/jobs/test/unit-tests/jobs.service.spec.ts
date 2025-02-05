@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { JobService } from '../providers/jobs.service';
-import { Job, JobContractType, JobSkill, State, City, Company, Industry } from '../entity/jobs.entity';
-import { StateService } from '../providers/state.service';
-import { CityService } from '../providers/city.service';
-import { CompanyService } from '../providers/company.service';
-import { IndustryService } from '../providers/industry.service';
-import { SkillService } from '../providers/skill.service';
-import { ContractTypeService } from '../providers/contractType.service';
-import { JobSkillService } from '../providers/job-skill.service';
-import { JobContractTypeService } from '../providers/job-contract-type.service';
-import { CustomLoggerService } from '../../common/services/logger.service';
-import { UnifiedJobDto } from '../dto/unified-job.dto';
+import { JobService } from '../../providers/jobs.service';
+import { Job, JobContractType, JobSkill, State, City, Company, Industry } from '../../entity/jobs.entity';
+import { StateService } from '../../providers/state.service';
+import { CityService } from '../../providers/city.service';
+import { CompanyService } from '../../providers/company.service';
+import { IndustryService } from '../../providers/industry.service';
+import { SkillService } from '../../providers/skill.service';
+import { ContractTypeService } from '../../providers/contractType.service';
+import { JobSkillService } from '../../providers/job-skill.service';
+import { JobContractTypeService } from '../../providers/job-contract-type.service';
+import { CustomLoggerService } from '../../../common/services/logger.service';
+import { UnifiedJobDto } from '../../dto/unified-job.dto';
 
 describe('JobService', () => {
   let service: JobService;

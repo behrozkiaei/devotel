@@ -43,33 +43,13 @@ describe('Jobs Module (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture = await createTestingModule();
     app = moduleFixture.createNestApplication();
-    
-    jobRepository = moduleFixture.get<Repository<Job>>(getRepositoryToken(Job));
-    jobSkillRepository = moduleFixture.get<Repository<JobSkill>>(getRepositoryToken(JobSkill));
-    jobContractTypeRepository = moduleFixture.get<Repository<JobContractType>>(getRepositoryToken(JobContractType));
-    skillRepository = moduleFixture.get<Repository<Skill>>(getRepositoryToken(Skill));
-    contractTypeRepository = moduleFixture.get<Repository<ContractType>>(getRepositoryToken(ContractType));
-    companyRepository = moduleFixture.get<Repository<Company>>(getRepositoryToken(Company));
-    cityRepository = moduleFixture.get<Repository<City>>(getRepositoryToken(City));
-    stateRepository = moduleFixture.get<Repository<State>>(getRepositoryToken(State));
-    industryRepository = moduleFixture.get<Repository<Industry>>(getRepositoryToken(Industry));
-
     await app.init();
   });
 
   afterAll(async () => {
-    // Clean up all data in reverse order of dependencies
-    await jobSkillRepository.query('DELETE FROM job_skills');
-    await jobContractTypeRepository.query('DELETE FROM job_contract_types');
-    await jobRepository.query('DELETE FROM jobs');
-    await skillRepository.query('DELETE FROM skills');
-    await contractTypeRepository.query('DELETE FROM contract_types');
-    await cityRepository.query('DELETE FROM cities');
-    await stateRepository.query('DELETE FROM states');
-    await companyRepository.query('DELETE FROM companies');
-    await industryRepository.query('DELETE FROM industries');
     
-    await app.close();
+      
+      await app.close();
   });
 
   describe('Job Insertion and Retrieval Flow', () => {
@@ -92,7 +72,7 @@ describe('Jobs Module (e2e)', () => {
         .get('/api/job-offers')
         .query(filters)
         .expect(200);
-
+      // console.log(response.body)
       expect(response.body.data).toBeDefined();
       expect(response.body.data.length).toBeGreaterThan(0);
       expect(response.body.data[0].company.name).toBe('BackEnd Solutions');
@@ -109,10 +89,9 @@ describe('Jobs Module (e2e)', () => {
         .get('/api/job-offers')
         .query(filters)
         .expect(200);
-
       expect(response.body.data).toBeDefined();
       expect(response.body.data.length).toBeGreaterThan(0);
-      expect(response.body.data[0].skills).toContain('Python');
+      expect(JSON.stringify(response.body.data[0].jobSkills)).toContain('Python');
     });
 
     it('should filter jobs by contract type', async () => {
@@ -129,7 +108,7 @@ describe('Jobs Module (e2e)', () => {
 
       expect(response.body.data).toBeDefined();
       expect(response.body.data.length).toBeGreaterThan(0);
-      expect(response.body.data[0].contractType).toContain('Contract');
+      expect(JSON.stringify(response.body.data[0].jobContractTypes)).toContain('Contract');
     });
 
     it('should combine multiple filters', async () => {
@@ -149,8 +128,8 @@ describe('Jobs Module (e2e)', () => {
       expect(response.body.data).toBeDefined();
       expect(response.body.data.length).toBeGreaterThan(0);
       expect(response.body.data[0].company.name).toBe('BackEnd Solutions');
-      expect(response.body.data[0].skills).toContain('Python');
-      expect(response.body.data[0].contractType).toContain('Contract');
+      expect(JSON.stringify(response.body.data[0].jobSkills)).toContain('Python');
+      expect(JSON.stringify(response.body.data[0].jobContractTypes)).toContain('Contract');
     });
   });
 }); 
