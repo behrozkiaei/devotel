@@ -7,6 +7,8 @@ import { JobFilterDto } from '../dto/job-filter.dto';
 import { CustomLoggerService } from '../../common/services/logger.service';
 import { AppError } from '../../common/errors/app.error';
 import { QueryFailedError } from 'typeorm';
+import { PaginatedResponseDto } from '../dto/paginated-response.dto';
+import { UnifiedJobDto } from '../dto/unified-job.dto';
 
 @Injectable()
 export class ApiService {
@@ -47,7 +49,7 @@ export class ApiService {
     }
   }
 
-  async getJobs(filter: JobFilterDto): Promise<{ data: Job[]; total: number }> {
+  async getJobs(filter: JobFilterDto): Promise<PaginatedResponseDto<Job>> {
     try {
       const result = await this.retry(async () => {
         const query = this.buildJobQuery(filter);
@@ -56,8 +58,8 @@ export class ApiService {
 
       const [data, total] = result;
       this.logger.debug(`Found ${total} jobs matching the criteria`);
-
-      return { data, total };
+      return { data, total ,totalPages: Math.ceil(total / (filter.limit ?? 10)),
+        currentPage: filter.page ?? 1, };
     } catch (error) {
       this.handleDatabaseError(error);
     }
@@ -75,17 +77,17 @@ export class ApiService {
         .leftJoinAndSelect('jobSkill.skill', 'skill')
         .take(filter.limit ?? 10)
         .skip(((filter.page ?? 1) - 1) * (filter.limit ?? 10));
-
+  
       if (filter.title) {
         query.andWhere('job.title LIKE :title', { title: `%${filter.title}%` });
       }
-
+  
       if (filter.location) {
         query.andWhere('city.name LIKE :location', {
           location: `%${filter.location}%`,
         });
       }
-
+  
       if (filter.salaryMin !== undefined && filter.salaryMax !== undefined) {
         query.andWhere(
           'job.compensation_min BETWEEN :salaryMin AND :salaryMax',
@@ -103,13 +105,13 @@ export class ApiService {
           salaryMax: filter.salaryMax,
         });
       }
-
+  
       if (filter.company) {
         query.andWhere('company.name LIKE :company', {
           company: `%${filter.company}%`,
         });
       }
-
+  
       if (filter.skills) {
         const skillsArray = Array.isArray(filter.skills)
           ? filter.skills
@@ -118,7 +120,7 @@ export class ApiService {
           query.andWhere('skill.name IN (:...skills)', { skills: skillsArray });
         }
       }
-
+  
       if (filter.contractTypes) {
         const contractTypesArray = Array.isArray(filter.contractTypes)
           ? filter.contractTypes
@@ -129,7 +131,9 @@ export class ApiService {
           });
         }
       }
-
+  
+  
+  
       return query;
     } catch (error) {
       throw AppError.BadRequest(
@@ -159,5 +163,32 @@ export class ApiService {
 
     this.logger.error('Unexpected error occurred', error.stack);
     throw AppError.Database('An unexpected error occurred while fetching jobs');
+  }
+
+  
+  private mapToUnifiedJobDto(job: any): UnifiedJobDto {
+    return {
+      jobId: job.jobId,
+      title: job.title,
+      remote: job.remote,
+      experience: job.experience,
+      city: job.city,
+      state: job.state,
+      fullAddress: job.fullAddress,
+      contractType: job.contractTypes.map(ct => ct.contractType.type),
+      compensation: {
+        min: job.compensation_min,
+        max: job.compensation_max,
+        currency: job.compensation_currency,
+        salaryRange: job.compensation_salary_range
+      },
+      company: {
+        name: job.company.name,
+        website: job.company.website
+      },
+      industry: job.industry.name,
+      skills: job.skills.map(s => s.skill.name),
+      postedDate: job.postedDate
+    };
   }
 }

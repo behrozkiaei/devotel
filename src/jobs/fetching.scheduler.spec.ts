@@ -121,18 +121,7 @@ describe('JobScheduler', () => {
     );
   });
 
-  test('should use mock data when no API URLs are configured', async () => {
-    mockConfigService.get.mockImplementation((key: string) => {
-      if (key === 'API1_URL' || key === 'API2_URL') {
-        return '';
-      }
-      return '0 */1 * * * *'; // Return default cron for scheduler
-    });
 
-    await (scheduler as any).fetchAndProcessJobs();
-
-    expect(jobService.insertJob).toHaveBeenCalled();
-  });
 
   test('should process mock jobs successfully', async () => {
     const processJobsSpy = jest.spyOn(scheduler as any, 'processJobs');

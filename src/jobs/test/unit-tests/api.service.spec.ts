@@ -2,9 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, QueryFailedError } from 'typeorm';
 
-
 import { Logger } from '@nestjs/common';
-import { City, Company, ContractType, Job, Skill } from '../../entity/jobs.entity';
+import {
+  City,
+  Company,
+  ContractType,
+  Job,
+  Skill,
+} from '../../entity/jobs.entity';
 import { JobFilterDto } from 'src/jobs/dto/job-filter.dto';
 import { AppError } from '../../../common/errors/app.error';
 import { ApiService } from '../../providers/api.service';
@@ -28,7 +33,9 @@ describe('ApiService', () => {
   };
 
   beforeEach(async () => {
-    loggerSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    loggerSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -73,8 +80,12 @@ describe('ApiService', () => {
     service = module.get<ApiService>(ApiService);
     jobRepository = module.get<Repository<Job>>(getRepositoryToken(Job));
     cityRepository = module.get<Repository<City>>(getRepositoryToken(City));
-    companyRepository = module.get<Repository<Company>>(getRepositoryToken(Company));
-    contractTypeRepository = module.get<Repository<ContractType>>(getRepositoryToken(ContractType));
+    companyRepository = module.get<Repository<Company>>(
+      getRepositoryToken(Company),
+    );
+    contractTypeRepository = module.get<Repository<ContractType>>(
+      getRepositoryToken(ContractType),
+    );
     skillRepository = module.get<Repository<Skill>>(getRepositoryToken(Skill));
 
     mockQueryBuilder.getManyAndCount.mockReset();
@@ -115,13 +126,36 @@ describe('ApiService', () => {
 
       const result = await service.getJobs(mockFilter);
 
-      expect(result).toEqual({ data: mockJobs, total: 1 });
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('job.city', 'city');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('job.company', 'company');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('job.jobContractTypes', 'jobContractType');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('jobContractType.contractType', 'contractType');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('job.jobSkills', 'jobSkill');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('jobSkill.skill', 'skill');
+      expect(result).toEqual({
+        data: mockJobs,
+        total: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'job.city',
+        'city',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'job.company',
+        'company',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'job.jobContractTypes',
+        'jobContractType',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'jobContractType.contractType',
+        'contractType',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'job.jobSkills',
+        'jobSkill',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'jobSkill.skill',
+        'skill',
+      );
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(mockFilter.limit);
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
     });
@@ -133,20 +167,22 @@ describe('ApiService', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'job.title LIKE :title',
-        { title: '%Software Engineer%' }
+        { title: '%Software Engineer%' },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'city.name LIKE :location',
-        { location: '%New York%' }
+        { location: '%New York%' },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'job.compensation_min BETWEEN :salaryMin AND :salaryMax',
-        { salaryMin: 50000, salaryMax: 150000 }
+        { salaryMin: 50000, salaryMax: 150000 },
       );
     });
 
     it('should handle database errors', async () => {
-      mockQueryBuilder.getManyAndCount.mockRejectedValueOnce(new Error('Database error'));
+      mockQueryBuilder.getManyAndCount.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
 
       await expect(service.getJobs(mockFilter)).rejects.toThrow(AppError);
     });
@@ -158,7 +194,7 @@ describe('ApiService', () => {
 
       const result = await service.getJobs(mockFilter);
 
-      expect(result).toEqual({ data: mockJobs, total: 1 });
+      expect(result).toEqual({ data: mockJobs, total: 1 ,totalPages :1  , currentPage:1 });
       expect(mockQueryBuilder.getManyAndCount).toHaveBeenCalledTimes(2);
     });
 
@@ -175,7 +211,7 @@ describe('ApiService', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'job.compensation_min >= :salaryMin',
-        { salaryMin: 50000 }
+        { salaryMin: 50000 },
       );
     });
 
@@ -191,7 +227,7 @@ describe('ApiService', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'skill.name IN (:...skills)',
-        { skills: ['JavaScript', 'TypeScript'] }
+        { skills: ['JavaScript', 'TypeScript'] },
       );
     });
   });
@@ -203,13 +239,17 @@ describe('ApiService', () => {
     };
 
     it('should handle QueryFailedError', async () => {
-      const queryError = new QueryFailedError('SELECT * FROM jobs', [], new Error('DB Error'));
+      const queryError = new QueryFailedError(
+        'SELECT * FROM jobs',
+        [],
+        new Error('DB Error'),
+      );
       mockQueryBuilder.getManyAndCount.mockRejectedValue(queryError);
 
       await expect(service.getJobs(baseFilter)).rejects.toThrow(AppError);
       expect(loggerSpy).toHaveBeenCalledWith(
         '[ERROR] Database query failed',
-        expect.any(String)
+        expect.any(String),
       );
     });
 
@@ -217,10 +257,12 @@ describe('ApiService', () => {
       const error = new Error('Unexpected error');
       mockQueryBuilder.getManyAndCount.mockRejectedValue(error);
 
-      await expect(service.getJobs(baseFilter)).rejects.toThrow('An unexpected error occurred while fetching jobs');
+      await expect(service.getJobs(baseFilter)).rejects.toThrow(
+        'An unexpected error occurred while fetching jobs',
+      );
       expect(loggerSpy).toHaveBeenCalledWith(
         '[ERROR] Unexpected error occurred',
-        expect.any(String)
+        expect.any(String),
       );
     });
 
@@ -231,4 +273,4 @@ describe('ApiService', () => {
       await expect(service.getJobs(baseFilter)).rejects.toThrow(appError);
     });
   });
-}); 
+});

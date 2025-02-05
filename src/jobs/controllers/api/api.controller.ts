@@ -8,6 +8,7 @@ import { Job } from 'src/jobs/entity/jobs.entity';
 import { ApiService } from '../../providers/api.service';
 import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter';
 import { CustomLoggerService } from '../../../common/services/logger.service';
+import { promises } from 'dns';
 
 @ApiTags('Job Offers')
 @Controller('api/job-offers')
@@ -31,7 +32,7 @@ export class ApiController {
   })
   @ApiResponse({ status: 400, description: 'Invalid query parameters' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getJobOffers(@Query() filters: JobFilterDto) {
+  async getJobOffers(@Query() filters: JobFilterDto) :Promise<PaginatedResponseDto<Job>>{
     this.logger.debug(`Receiving request for job offers with filters: ${JSON.stringify(filters)}`);
     return await this.apiService.getJobs(filters);
   }

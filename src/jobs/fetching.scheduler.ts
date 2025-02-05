@@ -52,105 +52,105 @@ export class JobScheduler {
         return;
       }
 
-      // const allJobs: UnifiedJobDto[] = [];
+      const allJobs: UnifiedJobDto[] = [];
       
-      // for (const url of apiUrls) {
-      //   try {
-      //     this.logger.debug(`Fetching jobs from ${url}`);
-      //     const response = await firstValueFrom(this.httpService.get(url));
-      //     const jobs = JobFactory.createFromAnyResponse(response.data, url);
-      //     allJobs.push(...jobs);
-      //     this.logger.log(`Successfully fetched ${jobs.length} jobs from ${url}`);
-      //   } catch (error) {
-      //     this.logger.error(`Failed to fetch from ${url}: ${error.message}`);
-      // }
+      for (const url of apiUrls) {
+        try {
+          this.logger.debug(`Fetching jobs from ${url}`);
+          const response = await firstValueFrom(this.httpService.get(url));
+          const jobs = JobFactory.createFromAnyResponse(response.data, url);
+          allJobs.push(...jobs);
+          this.logger.log(`Successfully fetched ${jobs.length} jobs from ${url}`);
+        } catch (error) {
+          this.logger.error(`Failed to fetch from ${url}: ${error.message}`);
+      }
+    }
+    //   const allJobs: UnifiedJobDto[] = [
+    //     {
+    //       jobId: 'P1-717',
+    //       title: 'Backend Engineer',
+    //       city: 'Austin',
+    //       state: 'TX',
+    //       fullAddress: 'Austin, TX',
+    //       remote: false,
+    //       compensation: {
+    //         min: 56000,
+    //         max: 113000,
+    //         currency: 'USD',
+    //         salaryRange: '$56k - $113k'
+    //       },
+    //       contractType: [ 'Contract' ],
+    //       company: { name: 'BackEnd Solutions', website: '' },
+    //       industry: 'Solutions',
+    //       skills: [ 'Python', 'Machine Learning', 'SQL' ],
+    //       postedDate: '2025-01-26T22:11:39.242Z',
+    //       experience: 0
+    //     },
+    //      {
+    //       jobId: 'P1-748',
+    //       title: 'Software Engineer',
+    //       city: 'San Francisco',
+    //       state: 'CA',
+    //       fullAddress: 'San Francisco, CA',
+    //       remote: false,
+    //       compensation: {
+    //         min: 86000,
+    //         max: 103000,
+    //         currency: 'USD',
+    //         salaryRange: '$86k - $103k'
+    //       },
+    //       contractType: [ 'Full-Time' ],
+    //       company: { name: 'TechCorp', website: '' },
+    //       industry: 'Design',
+    //       skills: [ 'Python', 'Machine Learning', 'SQL' ],
+    //       postedDate: '2025-01-30T03:20:03.067Z',
+    //       experience: 0
+    //     },
+    //      {
+    //       jobId: 'job-775',
+    //       title: 'Data Scientist',
+    //       city: 'Seattle',
+    //       state: 'TX',
+    //       fullAddress: 'Seattle, TX',
+    //       remote: true,
+    //       contractType: [ 'Remote' ],
+    //       compensation: {
+    //         min: 66000,
+    //         max: 106000,
+    //         currency: 'USD',
+    //         salaryRange: '$66k - $106k'
+    //       },
+    //       company: {
+    //         name: 'BackEnd Solutions',
+    //         website: 'https://creativedesign ltd.com'
+    //       },
+    //       industry: '',
+    //       skills: [ 'Python', 'Machine Learning', 'SQL' ],
+    //       postedDate: '2025-01-27',
+    //       experience: 2
+    //     },
+    //      {
+    //       jobId: 'job-812',
+    //       title: 'Frontend Developer',
+    //       city: 'New York',
+    //       state: 'NY',
+    //       fullAddress: 'New York, NY',
+    //       remote: false,
+    //       contractType: [],
+    //       compensation: {
+    //         min: 69000,
+    //         max: 118000,
+    //         currency: 'USD',
+    //         salaryRange: '$69k - $118k'
+    //       },
+    //       company: { name: 'DataWorks', website: 'https://techcorp.com' },
+    //       industry: '',
+    //       skills: [ 'HTML', 'CSS', 'Vue.js' ],
+    //       postedDate: '2025-01-28',
+    //       experience: 1
+    //     }
       
-      const allJobs: UnifiedJobDto[] = [
-        {
-          jobId: 'P1-717',
-          title: 'Backend Engineer',
-          city: 'Austin',
-          state: 'TX',
-          fullAddress: 'Austin, TX',
-          remote: false,
-          compensation: {
-            min: 56000,
-            max: 113000,
-            currency: 'USD',
-            salaryRange: '$56k - $113k'
-          },
-          contractType: [ 'Contract' ],
-          company: { name: 'BackEnd Solutions', website: '' },
-          industry: 'Solutions',
-          skills: [ 'Python', 'Machine Learning', 'SQL' ],
-          postedDate: '2025-01-26T22:11:39.242Z',
-          experience: 0
-        },
-         {
-          jobId: 'P1-748',
-          title: 'Software Engineer',
-          city: 'San Francisco',
-          state: 'CA',
-          fullAddress: 'San Francisco, CA',
-          remote: false,
-          compensation: {
-            min: 86000,
-            max: 103000,
-            currency: 'USD',
-            salaryRange: '$86k - $103k'
-          },
-          contractType: [ 'Full-Time' ],
-          company: { name: 'TechCorp', website: '' },
-          industry: 'Design',
-          skills: [ 'Python', 'Machine Learning', 'SQL' ],
-          postedDate: '2025-01-30T03:20:03.067Z',
-          experience: 0
-        },
-         {
-          jobId: 'job-775',
-          title: 'Data Scientist',
-          city: 'Seattle',
-          state: 'TX',
-          fullAddress: 'Seattle, TX',
-          remote: true,
-          contractType: [ 'Remote' ],
-          compensation: {
-            min: 66000,
-            max: 106000,
-            currency: 'USD',
-            salaryRange: '$66k - $106k'
-          },
-          company: {
-            name: 'BackEnd Solutions',
-            website: 'https://creativedesign ltd.com'
-          },
-          industry: '',
-          skills: [ 'Python', 'Machine Learning', 'SQL' ],
-          postedDate: '2025-01-27',
-          experience: 2
-        },
-         {
-          jobId: 'job-812',
-          title: 'Frontend Developer',
-          city: 'New York',
-          state: 'NY',
-          fullAddress: 'New York, NY',
-          remote: false,
-          contractType: [],
-          compensation: {
-            min: 69000,
-            max: 118000,
-            currency: 'USD',
-            salaryRange: '$69k - $118k'
-          },
-          company: { name: 'DataWorks', website: 'https://techcorp.com' },
-          industry: '',
-          skills: [ 'HTML', 'CSS', 'Vue.js' ],
-          postedDate: '2025-01-28',
-          experience: 1
-        }
-      
-    ];
+    // ];
       // console.log(allJobs);
       await this.processJobs(allJobs);
     } catch (error) {
